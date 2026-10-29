@@ -1,0 +1,7 @@
+{
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "tsConfigPath": "tsconfig.build.json",
+    "deleteOutDir": true
+  }
+}

@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: idv_owner
+      POSTGRES_PASSWORD: idv_owner
+      POSTGRES_DB: idv
+    ports:
+      - "5440:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "idv_owner", "-d", "idv"]
+      interval: 2s
+      retries: 20
+
+  api:
+    image: node:22-alpine
+    working_dir: /app/apps/api
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - .:/app
+    environment:
+      HOME: /tmp
+      DATABASE_URL: postgres://idv_app:idv_app@db:5432/idv
+      DATABASE_ADMIN_URL: postgres://idv_owner:idv_owner@db:5432/idv
+      TEST_DATABASE_URL: postgres://idv_app:idv_app@db:5432/idv_test
+      TEST_DATABASE_ADMIN_URL: postgres://idv_owner:idv_owner@db:5432/idv_test
+      STORAGE_DIR: /app/apps/api/.data/media
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run dev
+
+volumes:
+  db-data:
